@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explicador de Matemáticas y Recta Real Extendido</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input[type="text"], select, input[type="number"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .dynamic-list {
+            max-height: 180px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 6px;
+            background: #fafafa;
+            margin-bottom: 10px;
+        }
+
+        .dynamic-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .dynamic-item select {
+            width: 170px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+            padding: 8px 10px;
+        }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #334155;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .btn-secondary:hover { background-color: #cbd5e1; }
+
+        canvas {
+            width: 100%;
+            height: 190px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .formula-box {
+            background: #f1f5f9;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 15px;
+            margin-top: 5px;
+        }
+
+        .steps-list {
+            padding-left: 20px;
+            line-height: 1.6;
+            max-height: 160px;
+            overflow-y: auto;
+        }
+
+        .notation {
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 10px;
+            margin-top: 15px;
+            font-family: monospace;
+            border-radius: 0 6px 6px 0;
+            font-size: 13px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>📐 Explicador de Matemáticas</h1>
+        <p>Resuelve, explica paso a paso y grafica intervalos en la recta real</p>
+    </header>
+
+    <div class="grid">
+        <!-- Panel de Configuración y Pasos -->
+        <div class="card">
+            <h3>📝 Configuración y Resolución</h3>
+            
+            <div class="form-group">
+                <label>Fórmula o Inecuación:</label>
+                <input type="text" id="formulaInput" value="x^2 - 5x + 6 \\le 0">
+            </div>
+
+            <div class="form-group">
+                <label>Pasos de Resolución (Hasta la Z):</label>
+                <div class="dynamic-list" id="pasosContainer"></div>
+                <button type="button" class="btn-secondary" onclick="agregarPaso()">+ Añadir Paso</button>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+
+            <h4>Vista Previa del Planteamiento:</h4>
+            <div class="formula-box" id="displayFormula">x^2 - 5x + 6 \le 0</div>
+
+            <h4>Pasos Registrados:</h4>
+            <ol class="steps-list" id="displaySteps"></ol>
+        </div>
+
+        <!-- Panel de Recta Real y Puntos Múltiples (A-Z) -->
+        <div class="card">
+            <h3>📈 Recta Real e Intervalos Múltiples</h3>
+
+            <div class="form-group">
+                <label>Puntos en la Recta (Valores de A hasta Z):</label>
+                <div class="dynamic-list" id="puntosContainer"></div>
+                <button type="button" class="btn-secondary" onclick="agregarPunto()">+ Añadir Punto (Límite)</button>
+            </div>
+
+            <canvas id="rectaCanvas" width="450" height="190"></canvas>
+
+            <div class="notation" id="displayNotation">
+                Conjunto solución...
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const abecedario = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    let totalPuntos = 0;
+    let totalPasos = 0;
+
+    const formulaInput = document.getElementById('formulaInput');
+    const displayFormula = document.getElementById('displayFormula');
+    const displaySteps = document.getElementById('displaySteps');
+    const pasosContainer = document.getElementById('pasosContainer');
+    const puntosContainer = document.getElementById('puntosContainer');
+    const canvas = document.getElementById('rectaCanvas');
+    const ctx = canvas.getContext('2d');
+    const displayNotation = document.getElementById('displayNotation');
+
+    function inicializar() {
+        agregarPuntoFijo(2, 'cerrado');
+        agregarPuntoFijo(3, 'cerrado');
+        
+        agregarPasoFijo("Factorizar la expresión: (x - 2)(x - 3) ≤ 0");
+        agregarPasoFijo("Encontrar puntos críticos x = 2 y x = 3");
+
+        formulaInput.addEventListener('input', actualizarTodo);
+        actualizarTodo();
+    }
+
+    function agregarPuntoFijo(valor, tipo) {
+        if (totalPuntos >= abecedario.length) return;
+        let letra = abecedario[totalPuntos];
+        totalPuntos++;
+
+        let div = document.createElement('div');
+        div.className = 'dynamic-item';
+        div.innerHTML = `
+            <span style="font-weight:bold; width:20px;">${letra}:</span>
+            <input type="number" class="val-punto" value="${valor}" step="any" oninput="actualizarTodo()">
+            <select class="tipo-punto" onchange="actualizarTodo()">
+                <option value="cerrado" ${tipo==='cerrado'?'selected':''}>Cerrado [ ]</option>
+                <option value="abierto" ${tipo==='abierto'?'selected':''}>Abierto ( )</option>
+                <option value="inf_der" ${tipo==='inf_der'?'selected':''}>Infinito Der [a, +∞</option>
+                <option value="inf_izq" ${tipo==='inf_izq'?'selected':''}>Infinito Izq -∞, b]</option>
+            </select>
+            <button type="button" class="btn-danger" onclick="eliminarItem(this, 'punto')">✕</button>
+        `;
+        puntosContainer.appendChild(div);
+    }
+
+    function agregarPunto() {
+        if (totalPuntos >= abecedario.length) {
+            alert("Has alcanzado el límite de puntos hasta la Z.");
+            return;
+        }
+        let ultimoValor = 0;
+        let inputs = puntosContainer.querySelectorAll('.val-punto');
+        if(inputs.length > 0) {
+            ultimoValor = parseFloat(inputs[inputs.length - 1].value) + 1;
+        }
+        agregarPuntoFijo(ultimoValor, 'cerrado');
+        actualizarTodo();
+    }
+
+    function agregarPasoFijo(texto) {
+        if (totalPasos >= abecedario.length) return;
+        let letra = abecedario[totalPasos];
+        totalPasos++;
+
+        let div = document.createElement('div');
+        div.className = 'dynamic-item';
+        div.innerHTML = `
+            <span style="font-weight:bold; width:20px;">${letra}.</span>
+            <input type="text" class="val-paso" value="${texto}" oninput="actualizarTodo()">
+            <button type="button" class="btn-danger" onclick="eliminarItem(this, 'paso')">✕</button>
+        `;
+        pasosContainer.appendChild(div);
+    }
+
+    function agregarPaso() {
+        if (totalPasos >= abecedario.length) {
+            alert("Has alcanzado el límite de pasos hasta la Z.");
+            return;
+        }
+        agregarPasoFijo("Nuevo paso de resolución...");
+        actualizarTodo();
+    }
+
+    function eliminarItem(btn, tipo) {
+        btn.parentElement.remove();
+        reindexar();
+        actualizarTodo();
+    }
+
+    function reindexar() {
+        let puntosItems = puntosContainer.querySelectorAll('.dynamic-item');
+        totalPuntos = puntosItems.length;
+        puntosItems.forEach((item, index) => {
+            item.querySelector('span').textContent = abecedario[index] + ':';
+        });
+
+        let pasosItems = pasosContainer.querySelectorAll('.dynamic-item');
+        totalPasos = pasosItems.length;
+        pasosItems.forEach((item, index) => {
+            item.querySelector('span').textContent = abecedario[index] + '.';
+        });
+    }
+
+    function actualizarTodo() {
+        displayFormula.textContent = formulaInput.value;
+
+        let pasosInputs = pasosContainer.querySelectorAll('.val-paso');
+        let htmlPasos = "";
+        pasosInputs.forEach((inp) => {
+            htmlPasos += `<li>${inp.value}</li>`;
+        });
+        displaySteps.innerHTML = htmlPasos;
+
+        dibujarRecta();
+    }
+
+    function calcularPasoMarcas(rangoTotal) {
+        let pasoAproximado = rangoTotal / 10;
+        let magnitud = Math.pow(10, Math.floor(Math.log10(pasoAproximado)));
+        let residuo = pasoAproximado / magnitud;
+
+        if (residuo < 1.5) return magnitud;
+        if (residuo < 3) return 2 * magnitud;
+        if (residuo < 7) return 5 * magnitud;
+        return 10 * magnitud;
+    }
+
+    function dibujarRecta() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let puntoDivs = puntosContainer.querySelectorAll('.dynamic-item');
+        let puntos = [];
+
+        puntoDivs.forEach((item, index) => {
+            let val = parseFloat(item.querySelector('.val-punto').value);
+            let tipo = item.querySelector('.tipo-punto').value;
+            if (!isNaN(val)) {
+                puntos.push({ 
+                    letra: abecedario[index], 
+                    val: val, 
+                    tipo: tipo,
+                    cerrado: (tipo === 'cerrado' || tipo.startsWith('inf'))
+                });
+            }
+        });
+
+        puntos.sort((a, b) => a.val - b.val);
+
+        let minVal, maxVal;
+        if (puntos.length === 0) {
+            minVal = -5; maxVal = 5;
+        } else if (puntos.length === 1) {
+            minVal = puntos[0].val - 5;
+            maxVal = puntos[0].val + 5;
+        } else {
+            let menor = puntos[0].val;
+            let mayor = puntos[puntos.length - 1].val;
+            let diff = mayor - menor;
+            if (diff === 0) diff = 4;
+            let margen = diff * 0.35;
+            minVal = menor - margen;
+            maxVal = mayor + margen;
+        }
+
+        let rango = maxVal - minVal;
+        let paso = calcularPasoMarcas(rango);
+
+        function toPixel(val) {
+            return ((val - minVal) / rango) * (canvas.width - 80) + 40;
+        }
+
+        let yLinea = 95;
+
+        // Línea principal
+        ctx.beginPath();
+        ctx.moveTo(20, yLinea);
+        ctx.lineTo(canvas.width - 20, yLinea);
+        ctx.strokeStyle = "#1e293b";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Flechas
+        ctx.beginPath();
+        ctx.moveTo(25, yLinea - 5); ctx.lineTo(15, yLinea); ctx.lineTo(25, yLinea + 5);
+        ctx.moveTo(canvas.width - 25, yLinea - 5); ctx.lineTo(canvas.width - 15, yLinea); ctx.lineTo(canvas.width - 25, yLinea + 5);
+        ctx.stroke();
+
+        // Marcas
+        let primerTick = Math.ceil(minVal / paso) * paso;
+        ctx.font = "11px sans-serif";
+        ctx.fillStyle = "#64748b";
+        ctx.textAlign = "center";
+
+        for (let tick = primerTick; tick <= maxVal; tick += paso) {
+            let px = toPixel(tick);
+            if (px >= 35 && px <= canvas.width - 35) {
+                ctx.beginPath();
+                ctx.moveTo(px, yLinea - 4);
+                ctx.lineTo(px, yLinea + 4);
+                ctx.strokeStyle = "#64748b";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                let textoTick = Number.isInteger(tick) ? tick.toString() : tick.toFixed(1);
+                ctx.fillText(textoTick, px, yLinea + 20);
+            }
+        }
+
+        ctx.strokeStyle = "#2563eb";
+        ctx.fillStyle = "#2563eb";
+        ctx.lineWidth = 5;
+
+        let notacionTexto = "Intervalos: ";
+
+        // Procesar intervalos según las variantes seleccionadas
+        let i = 0;
+        while (i < puntos.length) {
+            let p = puntos[i];
+
+            if (p.tipo === 'inf_der') {
+                let px = toPixel(p.val);
+                ctx.beginPath();
+                ctx.moveTo(px, yLinea);
+                ctx.lineTo(canvas.width - 25, yLinea);
+                ctx.stroke();
+                notacionTexto += `[${p.letra}=${p.val}, +∞) `;
+                i++;
+            } else if (p.tipo === 'inf_izq') {
+                let px = toPixel(p.val);
+                ctx.beginPath();
+                ctx.moveTo(25, yLinea);
+                ctx.lineTo(px, yLinea);
+                ctx.stroke();
+                notacionTexto += `(-∞, ${p.letra}=${p.val}] `;
+                i++;
+            } else if (i + 1 < puntos.length && puntos[i+1].tipo !== 'inf_der' && puntos[i+1].tipo !== 'inf_izq') {
+                let p1 = puntos[i];
+                let p2 = puntos[i+1];
+                let px1 = toPixel(p1.val);
+                let px2 = toPixel(p2.val);
+
+                ctx.beginPath();
+                ctx.moveTo(px1, yLinea);
+                ctx.lineTo(px2, yLinea);
+                ctx.stroke();
+
+                let delimIzq = (p1.tipo === 'cerrado') ? '[' : '(';
+                let delimDer = (p2.tipo === 'cerrado') ? ']' : ')';
+                notacionTexto += `${delimIzq}${p1.letra}=${p1.val}, ${p2.letra}=${p2.val}${delimDer} `;
+                i += 2;
+            } else {
+                i++;
+            }
+        }
+
+        if(puntos.length === 0) {
+            notacionTexto = "Sin puntos definidos en la recta.";
+        }
+
+        displayNotation.innerHTML = notacionTexto;
+
+        // Dibujar puntos
+        puntos.forEach(p => {
+            let px = toPixel(p.val);
+            let lleno = (p.tipo === 'cerrado' || p.tipo.startsWith('inf'));
+            dibujarPunto(px, yLinea, lleno);
+
+            ctx.font = "bold 12px sans-serif";
+            ctx.fillStyle = "#2563eb";
+            ctx.textAlign = "center";
+            ctx.fillText(`${p.letra} (${p.val})`, px, yLinea - 18);
+        });
+    }
+
+    function dibujarPunto(x, y, lleno) {
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        if (lleno) {
+            ctx.fillStyle = "#2563eb";
+            ctx.fill();
+        } else {
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#2563eb";
+            ctx.stroke();
+        }
+    }
+
+    window.onload = inicializar;
+</script>
+
+</body>
+</html>
